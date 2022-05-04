@@ -88,14 +88,15 @@ end
 function accuracy(model, ps, st, dataloader)
     total_correct, total = 0, 0
     st = Lux.testmode(st)
-    for (x, y) in CuIterator(dataloader)
+    iterator = CUDA.functional() ? CuIterator(dataloader) : dataloader
+    for (x, y) in iterator
         target_class = get_class(cpu(y))
         predicted_class = get_class(cpu(model(x, ps, st)[1]))
         total_correct += sum(target_class .== predicted_class)
         total += length(target_class)
     end
     return total_correct / total
-end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">accuracy (generic function with 1 method)</code></pre><h2 id="Training"><a class="docs-heading-anchor" href="#Training">Training</a><a id="Training-1"></a><a class="docs-heading-anchor-permalink" href="#Training" title="Permalink"></a></h2><pre><code class="language- hljs">function train()
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">accuracy (generic function with 1 method)</code></pre><h2 id="Training"><a class="docs-heading-anchor" href="#Training">Training</a><a id="Training-1"></a><a class="docs-heading-anchor-permalink" href="#Training" title="Permalink"></a></h2><pre><code class="language-julia hljs">function train()
     model, ps, st = create_model()
 
     # Training
@@ -114,7 +115,8 @@ end</code></pre><pre class="documenter-example-output"><code class="nohighlight 
     nepochs = 9
     for epoch in 1:nepochs
         stime = time()
-        for (x, y) in CuIterator(train_dataloader)
+        iterator = CUDA.functional() ? CuIterator(train_dataloader) : train_dataloader
+        for (x, y) in iterator
             (l, _), back = pullback(p -&gt; loss(x, y, model, p, st), ps)
             gs = back((one(l), nothing))[1]
             st_opt, ps = Optimisers.update(st_opt, ps, gs)
@@ -129,4 +131,14 @@ end</code></pre><pre class="documenter-example-output"><code class="nohighlight 
     end
 end
 
-train()</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../../../introduction/ecosystem/">« Ecosystem</a><a class="docs-footer-nextpage" href="../../../../">Additional Examples »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.16 on <span class="colophon-date" title="Wednesday 4 May 2022 05:06">Wednesday 4 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+train()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌ Info: The GPU function is being called but the GPU is not accessible.
+└ Defaulting back to the CPU. (No action is required if you want to run on the CPU).
+[1/9] 	 Time 4.38s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[2/9] 	 Time 0.11s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[3/9] 	 Time 0.08s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[4/9] 	 Time 0.14s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[5/9] 	 Time 0.12s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[6/9] 	 Time 0.08s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[7/9] 	 Time 0.09s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[8/9] 	 Time 0.11s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%
+[9/9] 	 Time 0.11s 	 Training Accuracy: 12.89% 	 Test Accuracy: 7.33%</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../../../introduction/ecosystem/">« Ecosystem</a><a class="docs-footer-nextpage" href="../../../../">Additional Examples »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.16 on <span class="colophon-date" title="Wednesday 4 May 2022 13:48">Wednesday 4 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
