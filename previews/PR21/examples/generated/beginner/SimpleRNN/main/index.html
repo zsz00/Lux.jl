@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Training a Simple LSTM · Lux</title><script data-outdated-warner src="../../../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.044/juliamono.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../../../assets/documenter.js"></script><script src="../../../../../siteinfo.js"></script><script src="../../../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../../../assets/themeswap.js"></script><link href="../../../../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../../../../">Lux</a></span></div><form class="docs-search" action="../../../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../../../">Lux: Explicitly Parameterized Neural Networks</a></li><li><span class="tocitem">Introduction</span><ul><li><a class="tocitem" href="../../../../../introduction/overview/">All about Lux</a></li><li><a class="tocitem" href="../../../../../introduction/ecosystem/">Ecosystem</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../../../">Additional Examples</a></li></ul></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../../../../../api/layers/">Layers</a></li><li><a class="tocitem" href="../../../../../api/functional/">Functional</a></li><li><a class="tocitem" href="../../../../../api/core/">Core</a></li><li><a class="tocitem" href="../../../../../api/utilities/">Utilities</a></li></ul></li><li><span class="tocitem">Design Docs</span><ul><li><a class="tocitem" href="../../../../../design/recurrent/">Recurrent Neural Networks</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Training a Simple LSTM</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Training a Simple LSTM</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/avik-pal/Lux.jl/blob/main/examples/SimpleRNN/main.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Training-a-Simple-LSTM"><a class="docs-heading-anchor" href="#Training-a-Simple-LSTM">Training a Simple LSTM</a><a id="Training-a-Simple-LSTM-1"></a><a class="docs-heading-anchor-permalink" href="#Training-a-Simple-LSTM" title="Permalink"></a></h1><p>In this tutorial we will go over using a recurrent neural network to classify clockwise and anticlockwise spirals. By the end of this tutorial you will be able to:</p><ol><li>Create custom Lux models</li><li>Become familiar with the Lux recurrent neural network API</li><li>Training using Optimisers.jl and Zygote.jl</li></ol><h2 id="Package-Imports"><a class="docs-heading-anchor" href="#Package-Imports">Package Imports</a><a id="Package-Imports-1"></a><a class="docs-heading-anchor-permalink" href="#Package-Imports" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Lux
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Training a Simple LSTM · Lux</title><script data-outdated-warner src="../../../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.044/juliamono.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../../../assets/documenter.js"></script><script src="../../../../../siteinfo.js"></script><script src="../../../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../../../assets/themeswap.js"></script><link href="../../../../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../../../../">Lux</a></span></div><form class="docs-search" action="../../../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../../../">Lux: Explicitly Parameterized Neural Networks</a></li><li><span class="tocitem">Introduction</span><ul><li><a class="tocitem" href="../../../../../introduction/overview/">All about Lux</a></li><li><a class="tocitem" href="../../../../../introduction/ecosystem/">Ecosystem</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox" checked/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Beginner</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Basics/main/">Julia &amp; Lux for the Uninitiated</a></li><li class="is-active"><a class="tocitem" href>Training a Simple LSTM</a><ul class="internal"><li><a class="tocitem" href="#Package-Imports"><span>Package Imports</span></a></li><li><a class="tocitem" href="#Dataset"><span>Dataset</span></a></li><li><a class="tocitem" href="#Creating-a-Classifier"><span>Creating a Classifier</span></a></li><li><a class="tocitem" href="#Defining-Accuracy,-Loss-and-Optimiser"><span>Defining Accuracy, Loss and Optimiser</span></a></li><li><a class="tocitem" href="#Training-the-Model"><span>Training the Model</span></a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Intermediate</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../intermediate/NeuralODE/main/">MNIST NeuralODE Classification</a></li><li><a class="tocitem" href="../../../intermediate/BayesianNN/main/">Bayesian Neural Network</a></li></ul></li><li><span class="tocitem">Advanced</span></li><li><a class="tocitem" href="../../../../">Additional Examples</a></li></ul></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../../../../../api/layers/">Layers</a></li><li><a class="tocitem" href="../../../../../api/functional/">Functional</a></li><li><a class="tocitem" href="../../../../../api/core/">Core</a></li><li><a class="tocitem" href="../../../../../api/utilities/">Utilities</a></li></ul></li><li><span class="tocitem">Design Docs</span><ul><li><a class="tocitem" href="../../../../../design/recurrent/">Recurrent Neural Networks</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Beginner</a></li><li class="is-active"><a href>Training a Simple LSTM</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Training a Simple LSTM</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/avik-pal/Lux.jl/blob/main/examples/SimpleRNN/main.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Training-a-Simple-LSTM"><a class="docs-heading-anchor" href="#Training-a-Simple-LSTM">Training a Simple LSTM</a><a id="Training-a-Simple-LSTM-1"></a><a class="docs-heading-anchor-permalink" href="#Training-a-Simple-LSTM" title="Permalink"></a></h1><p>In this tutorial we will go over using a recurrent neural network to classify clockwise and anticlockwise spirals. By the end of this tutorial you will be able to:</p><ol><li>Create custom Lux models</li><li>Become familiar with the Lux recurrent neural network API</li><li>Training using Optimisers.jl and Zygote.jl</li></ol><h2 id="Package-Imports"><a class="docs-heading-anchor" href="#Package-Imports">Package Imports</a><a id="Package-Imports-1"></a><a class="docs-heading-anchor-permalink" href="#Package-Imports" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Lux
 using MLUtils, Optimisers, Zygote, NNlib, Random, Statistics</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">  Activating project at `~/work/Lux.jl/Lux.jl/examples`</code></pre><h2 id="Dataset"><a class="docs-heading-anchor" href="#Dataset">Dataset</a><a id="Dataset-1"></a><a class="docs-heading-anchor-permalink" href="#Dataset" title="Permalink"></a></h2><p>We will use MLUtils to generate 500 (noisy) clockwise and 500 (noisy) anticlockwise spirals. Using this data we will create a <code>MLUtils.DataLoader</code>. Our dataloader will give us sequences of size 2 × seq<em>len × batch</em>size and we need to predict a binary value whether the sequence is clockwise or anticlockwise</p><pre><code class="language-julia hljs">function get_dataloaders(; dataset_size=1000, sequence_length=50)
     # Create the spirals
     data = [MLUtils.Datasets.make_spiral(sequence_length) for _ in 1:dataset_size]
@@ -91,228 +91,228 @@ end</code></pre><pre class="documenter-example-output"><code class="nohighlight 
     end
 end
 
-main()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Epoch [1]: Loss 0.56300044
-Epoch [1]: Loss 0.5118977
-Epoch [1]: Loss 0.47105715
-Epoch [1]: Loss 0.4451346
-Epoch [1]: Loss 0.42892742
-Epoch [1]: Loss 0.40719807
-Epoch [1]: Loss 0.40554973
-Validation: Loss 0.37400955 Accuracy 1.0
-Validation: Loss 0.37322602 Accuracy 1.0
-Epoch [2]: Loss 0.363394
-Epoch [2]: Loss 0.34694573
-Epoch [2]: Loss 0.3349045
-Epoch [2]: Loss 0.32530642
-Epoch [2]: Loss 0.30549014
-Epoch [2]: Loss 0.2808024
-Epoch [2]: Loss 0.28143847
-Validation: Loss 0.261763 Accuracy 1.0
-Validation: Loss 0.26095593 Accuracy 1.0
-Epoch [3]: Loss 0.25483304
-Epoch [3]: Loss 0.24678497
-Epoch [3]: Loss 0.23487733
-Epoch [3]: Loss 0.22370413
-Epoch [3]: Loss 0.20979331
-Epoch [3]: Loss 0.19904552
-Epoch [3]: Loss 0.19280964
-Validation: Loss 0.18256137 Accuracy 1.0
-Validation: Loss 0.18194026 Accuracy 1.0
-Epoch [4]: Loss 0.18263571
-Epoch [4]: Loss 0.17305079
-Epoch [4]: Loss 0.16375
-Epoch [4]: Loss 0.15493236
-Epoch [4]: Loss 0.14939126
-Epoch [4]: Loss 0.14193858
-Epoch [4]: Loss 0.13632265
-Validation: Loss 0.13052054 Accuracy 1.0
-Validation: Loss 0.13006826 Accuracy 1.0
-Epoch [5]: Loss 0.13050377
-Epoch [5]: Loss 0.121366955
-Epoch [5]: Loss 0.118607774
-Epoch [5]: Loss 0.1126752
-Epoch [5]: Loss 0.10948015
-Epoch [5]: Loss 0.10302499
-Epoch [5]: Loss 0.09831933
-Validation: Loss 0.09539817 Accuracy 1.0
-Validation: Loss 0.09502965 Accuracy 1.0
-Epoch [6]: Loss 0.094056085
-Epoch [6]: Loss 0.0903438
-Epoch [6]: Loss 0.087626964
-Epoch [6]: Loss 0.08295973
-Epoch [6]: Loss 0.07966992
-Epoch [6]: Loss 0.074879214
-Epoch [6]: Loss 0.07202983
-Validation: Loss 0.07082631 Accuracy 1.0
-Validation: Loss 0.07052677 Accuracy 1.0
-Epoch [7]: Loss 0.07011213
-Epoch [7]: Loss 0.06748989
-Epoch [7]: Loss 0.064511456
-Epoch [7]: Loss 0.060817435
-Epoch [7]: Loss 0.059266247
-Epoch [7]: Loss 0.055946834
-Epoch [7]: Loss 0.05379791
-Validation: Loss 0.053175718 Accuracy 1.0
-Validation: Loss 0.052940473 Accuracy 1.0
-Epoch [8]: Loss 0.054384377
-Epoch [8]: Loss 0.04948539
-Epoch [8]: Loss 0.048150506
-Epoch [8]: Loss 0.04626623
-Epoch [8]: Loss 0.044209693
-Epoch [8]: Loss 0.0402664
-Epoch [8]: Loss 0.04263687
-Validation: Loss 0.04022187 Accuracy 1.0
-Validation: Loss 0.040048435 Accuracy 1.0
-Epoch [9]: Loss 0.040215556
-Epoch [9]: Loss 0.037260994
-Epoch [9]: Loss 0.03675916
-Epoch [9]: Loss 0.035272345
-Epoch [9]: Loss 0.03376276
-Epoch [9]: Loss 0.031305276
-Epoch [9]: Loss 0.029169695
-Validation: Loss 0.030865602 Accuracy 1.0
-Validation: Loss 0.030730817 Accuracy 1.0
-Epoch [10]: Loss 0.030955058
-Epoch [10]: Loss 0.028757768
-Epoch [10]: Loss 0.02843622
-Epoch [10]: Loss 0.025093101
-Epoch [10]: Loss 0.026302518
-Epoch [10]: Loss 0.025071282
-Epoch [10]: Loss 0.025731117
-Validation: Loss 0.024359433 Accuracy 1.0
-Validation: Loss 0.024264267 Accuracy 1.0
-Epoch [11]: Loss 0.023580942
-Epoch [11]: Loss 0.023776677
-Epoch [11]: Loss 0.022137297
-Epoch [11]: Loss 0.021383928
-Epoch [11]: Loss 0.021269571
-Epoch [11]: Loss 0.019288257
-Epoch [11]: Loss 0.01919701
-Validation: Loss 0.019845195 Accuracy 1.0
-Validation: Loss 0.019767946 Accuracy 1.0
-Epoch [12]: Loss 0.018211737
-Epoch [12]: Loss 0.020037318
-Epoch [12]: Loss 0.01830447
-Epoch [12]: Loss 0.016946062
-Epoch [12]: Loss 0.017686797
-Epoch [12]: Loss 0.016864251
-Epoch [12]: Loss 0.016095236
-Validation: Loss 0.016685927 Accuracy 1.0
-Validation: Loss 0.016627504 Accuracy 1.0
-Epoch [13]: Loss 0.0158731
-Epoch [13]: Loss 0.016245026
-Epoch [13]: Loss 0.015973713
-Epoch [13]: Loss 0.015193294
-Epoch [13]: Loss 0.014741328
-Epoch [13]: Loss 0.014111482
-Epoch [13]: Loss 0.012163725
-Validation: Loss 0.014400769 Accuracy 1.0
-Validation: Loss 0.014346966 Accuracy 1.0
-Epoch [14]: Loss 0.014196641
-Epoch [14]: Loss 0.015012485
-Epoch [14]: Loss 0.013069297
-Epoch [14]: Loss 0.011972404
-Epoch [14]: Loss 0.013018329
-Epoch [14]: Loss 0.012791847
-Epoch [14]: Loss 0.011006505
-Validation: Loss 0.012701612 Accuracy 1.0
-Validation: Loss 0.012649689 Accuracy 1.0
-Epoch [15]: Loss 0.012336534
-Epoch [15]: Loss 0.011731913
-Epoch [15]: Loss 0.010735866
-Epoch [15]: Loss 0.012261104
-Epoch [15]: Loss 0.011760674
-Epoch [15]: Loss 0.011745826
-Epoch [15]: Loss 0.011191955
-Validation: Loss 0.011377327 Accuracy 1.0
-Validation: Loss 0.011338654 Accuracy 1.0
-Epoch [16]: Loss 0.011332469
-Epoch [16]: Loss 0.011054598
-Epoch [16]: Loss 0.0104984185
-Epoch [16]: Loss 0.010477555
-Epoch [16]: Loss 0.010221166
-Epoch [16]: Loss 0.009967382
-Epoch [16]: Loss 0.009828395
-Validation: Loss 0.010292645 Accuracy 1.0
-Validation: Loss 0.010253329 Accuracy 1.0
-Epoch [17]: Loss 0.009600284
-Epoch [17]: Loss 0.010211318
-Epoch [17]: Loss 0.009727769
-Epoch [17]: Loss 0.009611915
-Epoch [17]: Loss 0.008973205
-Epoch [17]: Loss 0.009512553
-Epoch [17]: Loss 0.008953713
-Validation: Loss 0.009393765 Accuracy 1.0
-Validation: Loss 0.0093585495 Accuracy 1.0
-Epoch [18]: Loss 0.008690096
-Epoch [18]: Loss 0.008968495
-Epoch [18]: Loss 0.008746414
-Epoch [18]: Loss 0.008867803
-Epoch [18]: Loss 0.008437534
-Epoch [18]: Loss 0.008921844
-Epoch [18]: Loss 0.0084918365
-Validation: Loss 0.008632902 Accuracy 1.0
-Validation: Loss 0.00859891 Accuracy 1.0
-Epoch [19]: Loss 0.008075367
-Epoch [19]: Loss 0.0082132
-Epoch [19]: Loss 0.00831538
-Epoch [19]: Loss 0.008354428
-Epoch [19]: Loss 0.008039759
-Epoch [19]: Loss 0.007592131
-Epoch [19]: Loss 0.0073205936
-Validation: Loss 0.007973694 Accuracy 1.0
-Validation: Loss 0.007944836 Accuracy 1.0
-Epoch [20]: Loss 0.0073104617
-Epoch [20]: Loss 0.00777924
-Epoch [20]: Loss 0.007988485
-Epoch [20]: Loss 0.007555011
-Epoch [20]: Loss 0.007049248
-Epoch [20]: Loss 0.0071440665
-Epoch [20]: Loss 0.007295398
-Validation: Loss 0.0074011227 Accuracy 1.0
-Validation: Loss 0.007373484 Accuracy 1.0
-Epoch [21]: Loss 0.007356493
-Epoch [21]: Loss 0.006549567
-Epoch [21]: Loss 0.0075143212
-Epoch [21]: Loss 0.0065192026
-Epoch [21]: Loss 0.0073574665
-Epoch [21]: Loss 0.0064361035
-Epoch [21]: Loss 0.00649831
-Validation: Loss 0.006896742 Accuracy 1.0
-Validation: Loss 0.0068712216 Accuracy 1.0
-Epoch [22]: Loss 0.0077654333
-Epoch [22]: Loss 0.006636592
-Epoch [22]: Loss 0.0062433565
-Epoch [22]: Loss 0.006230606
-Epoch [22]: Loss 0.0061207856
-Epoch [22]: Loss 0.005957162
-Epoch [22]: Loss 0.006084688
-Validation: Loss 0.0064479806 Accuracy 1.0
-Validation: Loss 0.006423564 Accuracy 1.0
-Epoch [23]: Loss 0.006208638
-Epoch [23]: Loss 0.00619377
-Epoch [23]: Loss 0.006244657
-Epoch [23]: Loss 0.0056927307
-Epoch [23]: Loss 0.006302884
-Epoch [23]: Loss 0.005742609
-Epoch [23]: Loss 0.0058945036
-Validation: Loss 0.006050812 Accuracy 1.0
-Validation: Loss 0.0060279467 Accuracy 1.0
-Epoch [24]: Loss 0.006290147
-Epoch [24]: Loss 0.005651705
-Epoch [24]: Loss 0.0056668934
-Epoch [24]: Loss 0.0055637783
-Epoch [24]: Loss 0.0052928235
-Epoch [24]: Loss 0.0056116763
-Epoch [24]: Loss 0.005932429
-Validation: Loss 0.00569246 Accuracy 1.0
-Validation: Loss 0.005671625 Accuracy 1.0
-Epoch [25]: Loss 0.0055674226
-Epoch [25]: Loss 0.0054546995
-Epoch [25]: Loss 0.005114871
-Epoch [25]: Loss 0.0051696757
-Epoch [25]: Loss 0.00551592
-Epoch [25]: Loss 0.005341237
-Epoch [25]: Loss 0.005241243
-Validation: Loss 0.005368787 Accuracy 1.0
-Validation: Loss 0.0053482344 Accuracy 1.0</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Wednesday 18 May 2022 04:55">Wednesday 18 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+main()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Epoch [1]: Loss 0.56184506
+Epoch [1]: Loss 0.5091104
+Epoch [1]: Loss 0.4769262
+Epoch [1]: Loss 0.45212954
+Epoch [1]: Loss 0.42452693
+Epoch [1]: Loss 0.40331286
+Epoch [1]: Loss 0.39020786
+Validation: Loss 0.36477584 Accuracy 1.0
+Validation: Loss 0.36574173 Accuracy 1.0
+Epoch [2]: Loss 0.36323157
+Epoch [2]: Loss 0.35150355
+Epoch [2]: Loss 0.33425036
+Epoch [2]: Loss 0.31941998
+Epoch [2]: Loss 0.29716876
+Epoch [2]: Loss 0.2897184
+Epoch [2]: Loss 0.26194242
+Validation: Loss 0.25491902 Accuracy 1.0
+Validation: Loss 0.25583178 Accuracy 1.0
+Epoch [3]: Loss 0.25474438
+Epoch [3]: Loss 0.24796799
+Epoch [3]: Loss 0.23192818
+Epoch [3]: Loss 0.21789624
+Epoch [3]: Loss 0.20733275
+Epoch [3]: Loss 0.19965245
+Epoch [3]: Loss 0.18796498
+Validation: Loss 0.17779095 Accuracy 1.0
+Validation: Loss 0.1783438 Accuracy 1.0
+Epoch [4]: Loss 0.17722605
+Epoch [4]: Loss 0.16986424
+Epoch [4]: Loss 0.16297354
+Epoch [4]: Loss 0.1545144
+Epoch [4]: Loss 0.14652975
+Epoch [4]: Loss 0.14033093
+Epoch [4]: Loss 0.13496599
+Validation: Loss 0.12643866 Accuracy 1.0
+Validation: Loss 0.1267615 Accuracy 1.0
+Epoch [5]: Loss 0.12745416
+Epoch [5]: Loss 0.12264167
+Epoch [5]: Loss 0.11525739
+Epoch [5]: Loss 0.11118184
+Epoch [5]: Loss 0.104125515
+Epoch [5]: Loss 0.10128274
+Epoch [5]: Loss 0.096129656
+Validation: Loss 0.09157555 Accuracy 1.0
+Validation: Loss 0.09179374 Accuracy 1.0
+Epoch [6]: Loss 0.092241295
+Epoch [6]: Loss 0.08892604
+Epoch [6]: Loss 0.08470659
+Epoch [6]: Loss 0.08033473
+Epoch [6]: Loss 0.07707871
+Epoch [6]: Loss 0.07306853
+Epoch [6]: Loss 0.072609395
+Validation: Loss 0.06723485 Accuracy 1.0
+Validation: Loss 0.06741824 Accuracy 1.0
+Epoch [7]: Loss 0.067979574
+Epoch [7]: Loss 0.06614789
+Epoch [7]: Loss 0.06223471
+Epoch [7]: Loss 0.058731847
+Epoch [7]: Loss 0.05695976
+Epoch [7]: Loss 0.0550164
+Epoch [7]: Loss 0.053227164
+Validation: Loss 0.04994098 Accuracy 1.0
+Validation: Loss 0.05009258 Accuracy 1.0
+Epoch [8]: Loss 0.050887782
+Epoch [8]: Loss 0.04922581
+Epoch [8]: Loss 0.04673785
+Epoch [8]: Loss 0.044734225
+Epoch [8]: Loss 0.04179838
+Epoch [8]: Loss 0.04049973
+Epoch [8]: Loss 0.041277062
+Validation: Loss 0.037427876 Accuracy 1.0
+Validation: Loss 0.03755267 Accuracy 1.0
+Epoch [9]: Loss 0.038331885
+Epoch [9]: Loss 0.03665256
+Epoch [9]: Loss 0.034699064
+Epoch [9]: Loss 0.033661336
+Epoch [9]: Loss 0.031852692
+Epoch [9]: Loss 0.03101914
+Epoch [9]: Loss 0.033494268
+Validation: Loss 0.028493172 Accuracy 1.0
+Validation: Loss 0.028602414 Accuracy 1.0
+Epoch [10]: Loss 0.028832456
+Epoch [10]: Loss 0.027263785
+Epoch [10]: Loss 0.027288886
+Epoch [10]: Loss 0.025116341
+Epoch [10]: Loss 0.02565574
+Epoch [10]: Loss 0.025375443
+Epoch [10]: Loss 0.02339391
+Validation: Loss 0.022354437 Accuracy 1.0
+Validation: Loss 0.022451619 Accuracy 1.0
+Epoch [11]: Loss 0.022502083
+Epoch [11]: Loss 0.022008287
+Epoch [11]: Loss 0.021307208
+Epoch [11]: Loss 0.02020977
+Epoch [11]: Loss 0.020499296
+Epoch [11]: Loss 0.020413283
+Epoch [11]: Loss 0.019043712
+Validation: Loss 0.01817184 Accuracy 1.0
+Validation: Loss 0.018257612 Accuracy 1.0
+Epoch [12]: Loss 0.017450754
+Epoch [12]: Loss 0.01824451
+Epoch [12]: Loss 0.018222852
+Epoch [12]: Loss 0.017215878
+Epoch [12]: Loss 0.017544705
+Epoch [12]: Loss 0.01601138
+Epoch [12]: Loss 0.015409979
+Validation: Loss 0.015267609 Accuracy 1.0
+Validation: Loss 0.015344298 Accuracy 1.0
+Epoch [13]: Loss 0.015423654
+Epoch [13]: Loss 0.014730098
+Epoch [13]: Loss 0.015868759
+Epoch [13]: Loss 0.014197309
+Epoch [13]: Loss 0.013928015
+Epoch [13]: Loss 0.014686252
+Epoch [13]: Loss 0.013589441
+Validation: Loss 0.013185917 Accuracy 1.0
+Validation: Loss 0.013256085 Accuracy 1.0
+Epoch [14]: Loss 0.013869268
+Epoch [14]: Loss 0.013816841
+Epoch [14]: Loss 0.013190429
+Epoch [14]: Loss 0.012787113
+Epoch [14]: Loss 0.011981457
+Epoch [14]: Loss 0.012001349
+Epoch [14]: Loss 0.011083124
+Validation: Loss 0.011621326 Accuracy 1.0
+Validation: Loss 0.011685252 Accuracy 1.0
+Epoch [15]: Loss 0.0118183335
+Epoch [15]: Loss 0.011009715
+Epoch [15]: Loss 0.011979973
+Epoch [15]: Loss 0.011340416
+Epoch [15]: Loss 0.011594266
+Epoch [15]: Loss 0.010603523
+Epoch [15]: Loss 0.011701513
+Validation: Loss 0.01040509 Accuracy 1.0
+Validation: Loss 0.01046518 Accuracy 1.0
+Epoch [16]: Loss 0.011031338
+Epoch [16]: Loss 0.010535043
+Epoch [16]: Loss 0.010580553
+Epoch [16]: Loss 0.009506216
+Epoch [16]: Loss 0.01023974
+Epoch [16]: Loss 0.010204012
+Epoch [16]: Loss 0.008144121
+Validation: Loss 0.009416061 Accuracy 1.0
+Validation: Loss 0.009472166 Accuracy 1.0
+Epoch [17]: Loss 0.009548527
+Epoch [17]: Loss 0.009219671
+Epoch [17]: Loss 0.009979402
+Epoch [17]: Loss 0.009545343
+Epoch [17]: Loss 0.0086764535
+Epoch [17]: Loss 0.00913024
+Epoch [17]: Loss 0.008603372
+Validation: Loss 0.008598277 Accuracy 1.0
+Validation: Loss 0.008651681 Accuracy 1.0
+Epoch [18]: Loss 0.009005272
+Epoch [18]: Loss 0.008610688
+Epoch [18]: Loss 0.009138794
+Epoch [18]: Loss 0.008402173
+Epoch [18]: Loss 0.00807841
+Epoch [18]: Loss 0.008371955
+Epoch [18]: Loss 0.007010102
+Validation: Loss 0.007903755 Accuracy 1.0
+Validation: Loss 0.00795418 Accuracy 1.0
+Epoch [19]: Loss 0.0083005335
+Epoch [19]: Loss 0.0075390865
+Epoch [19]: Loss 0.008032212
+Epoch [19]: Loss 0.008240352
+Epoch [19]: Loss 0.008193651
+Epoch [19]: Loss 0.0069793668
+Epoch [19]: Loss 0.007534238
+Validation: Loss 0.0073071 Accuracy 1.0
+Validation: Loss 0.007355478 Accuracy 1.0
+Epoch [20]: Loss 0.007888654
+Epoch [20]: Loss 0.0071723023
+Epoch [20]: Loss 0.007700012
+Epoch [20]: Loss 0.007005102
+Epoch [20]: Loss 0.007272492
+Epoch [20]: Loss 0.006764121
+Epoch [20]: Loss 0.007003755
+Validation: Loss 0.006785362 Accuracy 1.0
+Validation: Loss 0.0068309773 Accuracy 1.0
+Epoch [21]: Loss 0.006767337
+Epoch [21]: Loss 0.0067551634
+Epoch [21]: Loss 0.006930955
+Epoch [21]: Loss 0.007161554
+Epoch [21]: Loss 0.0067115566
+Epoch [21]: Loss 0.0063638235
+Epoch [21]: Loss 0.0067085563
+Validation: Loss 0.006326427 Accuracy 1.0
+Validation: Loss 0.006370155 Accuracy 1.0
+Epoch [22]: Loss 0.0058209207
+Epoch [22]: Loss 0.0065392684
+Epoch [22]: Loss 0.006236794
+Epoch [22]: Loss 0.0065961275
+Epoch [22]: Loss 0.0065923617
+Epoch [22]: Loss 0.0064092395
+Epoch [22]: Loss 0.005398771
+Validation: Loss 0.0059192018 Accuracy 1.0
+Validation: Loss 0.005960392 Accuracy 1.0
+Epoch [23]: Loss 0.0060033384
+Epoch [23]: Loss 0.005953591
+Epoch [23]: Loss 0.005682975
+Epoch [23]: Loss 0.005878116
+Epoch [23]: Loss 0.0060250065
+Epoch [23]: Loss 0.0058577345
+Epoch [23]: Loss 0.006603377
+Validation: Loss 0.0055560693 Accuracy 1.0
+Validation: Loss 0.005595656 Accuracy 1.0
+Epoch [24]: Loss 0.0056492426
+Epoch [24]: Loss 0.005342161
+Epoch [24]: Loss 0.0058127455
+Epoch [24]: Loss 0.0056968224
+Epoch [24]: Loss 0.005472269
+Epoch [24]: Loss 0.005503855
+Epoch [24]: Loss 0.005373602
+Validation: Loss 0.0052267676 Accuracy 1.0
+Validation: Loss 0.005264009 Accuracy 1.0
+Epoch [25]: Loss 0.0055288537
+Epoch [25]: Loss 0.0053666523
+Epoch [25]: Loss 0.005099475
+Epoch [25]: Loss 0.005167342
+Epoch [25]: Loss 0.0053488184
+Epoch [25]: Loss 0.005016393
+Epoch [25]: Loss 0.0050757234
+Validation: Loss 0.0049298904 Accuracy 1.0
+Validation: Loss 0.0049653566 Accuracy 1.0</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../Basics/main/">« Julia &amp; Lux for the Uninitiated</a><a class="docs-footer-nextpage" href="../../../intermediate/NeuralODE/main/">MNIST NeuralODE Classification »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Wednesday 18 May 2022 05:19">Wednesday 18 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
