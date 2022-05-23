@@ -68,6 +68,8 @@ ps_b, st_b = fmap(make_brulux_array, ps), fmap(make_brulux_array, st);
 x = randn(Float32, 256, 256, 3, 2);
 x_b = BruLuxArray(x);
 
-vit(x, ps, st)[1]
-vit(x_b, ps_b, st_b)[1]
+r = vit(x, ps, st)[1]
+r_b = vit(x_b, ps_b, st_b)[1]
+
+r ≈ r_b
 ```
