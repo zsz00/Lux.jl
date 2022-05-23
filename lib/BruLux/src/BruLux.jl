@@ -73,13 +73,6 @@ end
 ## Broadcasting
 Base.BroadcastStyle(::Type{<:BruLuxArray}) = Broadcast.ArrayStyle{BruLuxArray}()
 
-find_bruluxarray(bc::Base.Broadcast.Broadcasted) = find_bruluxarray(bc.args)
-find_bruluxarray(args::Tuple) = find_bruluxarray(find_bruluxarray(args[1]), Base.tail(args))
-find_bruluxarray(x) = x
-find_bruluxarray(::Tuple{}) = nothing
-find_bruluxarray(a::BruLuxArray, rest) = a
-find_bruluxarray(::Any, rest) = find_bruluxarray(rest)
-
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{BruLuxArray}}, ::Type{ElType}) where ElType
     BruLuxArray(similar(Array{ElType}, axes(bc)))
 end
