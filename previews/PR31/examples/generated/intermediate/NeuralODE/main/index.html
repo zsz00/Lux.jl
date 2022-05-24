@@ -19,13 +19,13 @@ function loadmnist(batchsize, train_split)
     # Process images into (H,W,C,BS) batches
     x_data = Float32.(reshape(imgs, size(imgs, 1), size(imgs, 2), 1, size(imgs, 3)))
     y_data = onehot(labels_raw)
-    (x_train, y_train), (x_test, y_test) = splitobs((x_data, y_data); at = train_split)
+    (x_train, y_train), (x_test, y_test) = splitobs((x_data, y_data); at=train_split)
 
     return (
             # Use DataLoader to automatically minibatch and shuffle the data
-            DataLoader(collect.((x_train, y_train)); batchsize = batchsize, shuffle = true),
+            DataLoader(collect.((x_train, y_train)); batchsize=batchsize, shuffle=true),
             # Don&#39;t shuffle the test data
-            DataLoader(collect.((x_test, y_test)); batchsize = batchsize, shuffle = false))
+            DataLoader(collect.((x_test, y_test)); batchsize=batchsize, shuffle=false))
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">loadmnist (generic function with 1 method)</code></pre><h2 id="Define-the-Neural-ODE-Layer"><a class="docs-heading-anchor" href="#Define-the-Neural-ODE-Layer">Define the Neural ODE Layer</a><a id="Define-the-Neural-ODE-Layer-1"></a><a class="docs-heading-anchor-permalink" href="#Define-the-Neural-ODE-Layer" title="Permalink"></a></h2><p>The NeuralODE is a ContainerLayer. It stores a <code>model</code> and the parameters and states of the NeuralODE is same as that of the underlying model.</p><pre><code class="language-julia hljs">struct NeuralODE{M &lt;: Lux.AbstractExplicitLayer, So, Se, T, K} &lt;:
        Lux.AbstractExplicitContainerLayer{(:model,)}
     model::M
@@ -36,9 +36,9 @@ end</code></pre><pre class="documenter-example-output"><code class="nohighlight 
 end
 
 function NeuralODE(model::Lux.AbstractExplicitLayer;
-                   solver = Tsit5(),
-                   sensealg = InterpolatingAdjoint(; autojacvec = ZygoteVJP()),
-                   tspan = (0.0f0, 1.0f0),
+                   solver=Tsit5(),
+                   sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()),
+                   tspan=(0.0f0, 1.0f0),
                    kwargs...)
     return NeuralODE(model, solver, sensealg, tspan, kwargs)
 end
@@ -49,22 +49,22 @@ function (n::NeuralODE)(x, ps, st)
         return u_
     end
     prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
-    return solve(prob, n.solver; sensealg = n.sensealg, n.kwargs...), st
+    return solve(prob, n.solver; sensealg=n.sensealg, n.kwargs...), st
 end
 
 function diffeqsol_to_array(x::ODESolution{T, N, &lt;:AbstractVector{&lt;:CuArray}}) where {T, N}
-    dropdims(gpu(x); dims = 3)
+    dropdims(gpu(x); dims=3)
 end
-diffeqsol_to_array(x::ODESolution) = dropdims(Array(x); dims = 3)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">diffeqsol_to_array (generic function with 2 methods)</code></pre><h2 id="Create-and-Initialize-the-Neural-ODE-Layer"><a class="docs-heading-anchor" href="#Create-and-Initialize-the-Neural-ODE-Layer">Create and Initialize the Neural ODE Layer</a><a id="Create-and-Initialize-the-Neural-ODE-Layer-1"></a><a class="docs-heading-anchor-permalink" href="#Create-and-Initialize-the-Neural-ODE-Layer" title="Permalink"></a></h2><pre><code class="language-julia hljs">function create_model()
+diffeqsol_to_array(x::ODESolution) = dropdims(Array(x); dims=3)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">diffeqsol_to_array (generic function with 2 methods)</code></pre><h2 id="Create-and-Initialize-the-Neural-ODE-Layer"><a class="docs-heading-anchor" href="#Create-and-Initialize-the-Neural-ODE-Layer">Create and Initialize the Neural ODE Layer</a><a id="Create-and-Initialize-the-Neural-ODE-Layer-1"></a><a class="docs-heading-anchor-permalink" href="#Create-and-Initialize-the-Neural-ODE-Layer" title="Permalink"></a></h2><pre><code class="language-julia hljs">function create_model()
     # Construct the Neural ODE Model
     model = Chain(FlattenLayer(),
                   Dense(784, 20, tanh),
                   NeuralODE(Chain(Dense(20, 10, tanh), Dense(10, 10, tanh),
                                   Dense(10, 20, tanh));
-                            save_everystep = false,
-                            reltol = 1.0f-3,
-                            abstol = 1.0f-3,
-                            save_start = false),
+                            save_everystep=false,
+                            reltol=1.0f-3,
+                            abstol=1.0f-3,
+                            save_start=false),
                   diffeqsol_to_array,
                   Dense(20, 10))
 
@@ -78,7 +78,7 @@ diffeqsol_to_array(x::ODESolution) = dropdims(Array(x); dims = 3)</code></pre><p
     return model, ps, st
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">create_model (generic function with 1 method)</code></pre><h2 id="Define-Utility-Functions"><a class="docs-heading-anchor" href="#Define-Utility-Functions">Define Utility Functions</a><a id="Define-Utility-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Define-Utility-Functions" title="Permalink"></a></h2><pre><code class="language-julia hljs">get_class(x) = argmax.(eachcol(x))
 
-logitcrossentropy(ŷ, y) = mean(-sum(y .* logsoftmax(ŷ); dims = 1))
+logitcrossentropy(ŷ, y) = mean(-sum(y .* logsoftmax(ŷ); dims=1))
 
 function loss(x, y, model, ps, st)
     ŷ, st = model(x, ps, st)
@@ -132,12 +132,12 @@ end
 
 train()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌ Info: The GPU function is being called but the GPU is not accessible.
 └ Defaulting back to the CPU. (No action is required if you want to run on the CPU).
-[1/9] 	 Time 1.84s 	 Training Accuracy: 51.7% 	 Test Accuracy: 44.0%
+[1/9] 	 Time 1.78s 	 Training Accuracy: 51.7% 	 Test Accuracy: 44.0%
 [2/9] 	 Time 0.1s 	 Training Accuracy: 71.04% 	 Test Accuracy: 66.67%
-[3/9] 	 Time 0.15s 	 Training Accuracy: 78.07% 	 Test Accuracy: 72.0%
-[4/9] 	 Time 0.16s 	 Training Accuracy: 79.93% 	 Test Accuracy: 73.33%
+[3/9] 	 Time 0.17s 	 Training Accuracy: 78.07% 	 Test Accuracy: 72.0%
+[4/9] 	 Time 0.08s 	 Training Accuracy: 79.93% 	 Test Accuracy: 73.33%
 [5/9] 	 Time 0.08s 	 Training Accuracy: 82.89% 	 Test Accuracy: 78.0%
-[6/9] 	 Time 0.08s 	 Training Accuracy: 84.52% 	 Test Accuracy: 78.67%
+[6/9] 	 Time 0.11s 	 Training Accuracy: 84.52% 	 Test Accuracy: 78.67%
 [7/9] 	 Time 0.11s 	 Training Accuracy: 85.78% 	 Test Accuracy: 80.67%
-[8/9] 	 Time 0.1s 	 Training Accuracy: 86.81% 	 Test Accuracy: 81.33%
-[9/9] 	 Time 0.09s 	 Training Accuracy: 87.48% 	 Test Accuracy: 82.67%</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../beginner/SimpleRNN/main/">« Training a Simple LSTM</a><a class="docs-footer-nextpage" href="../../BayesianNN/main/">Bayesian Neural Network »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Tuesday 24 May 2022 05:04">Tuesday 24 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+[8/9] 	 Time 0.08s 	 Training Accuracy: 86.81% 	 Test Accuracy: 81.33%
+[9/9] 	 Time 0.09s 	 Training Accuracy: 87.48% 	 Test Accuracy: 82.67%</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../beginner/SimpleRNN/main/">« Training a Simple LSTM</a><a class="docs-footer-nextpage" href="../../BayesianNN/main/">Bayesian Neural Network »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Tuesday 24 May 2022 18:47">Tuesday 24 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
